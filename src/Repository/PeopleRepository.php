@@ -23,6 +23,10 @@ class PeopleRepository extends ServiceEntityRepository
 
     public function add(People $entity, bool $flush = false): void
     {
+        if ($this->alreadyExists($entity)) {
+            throw new \RuntimeException('This people already exists !!', 400);
+        }
+
         $this->getEntityManager()->persist($entity);
 
         if ($flush) {
@@ -39,28 +43,15 @@ class PeopleRepository extends ServiceEntityRepository
         }
     }
 
-//    /**
-//     * @return People[] Returns an array of People objects
-//     */
-//    public function findByExampleField($value): array
-//    {
-//        return $this->createQueryBuilder('p')
-//            ->andWhere('p.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->orderBy('p.id', 'ASC')
-//            ->setMaxResults(10)
-//            ->getQuery()
-//            ->getResult()
-//        ;
-//    }
+    private function alreadyExists(People $people): bool
+    {
+        $conn = $this->getEntityManager()->getConnection();
+        $contact = $people->getContact();
 
-//    public function findOneBySomeField($value): ?People
-//    {
-//        return $this->createQueryBuilder('p')
-//            ->andWhere('p.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->getQuery()
-//            ->getOneOrNullResult()
-//        ;
-//    }
+        $sql = "SELECT * FROM people WHERE contact::jsonb @> '{\"firstname\": \"${contact['firstname']}\", \"lastname\": \"${contact['lastname']}\", \"email\": \"${contact['email']}\"}'::jsonb";
+        $stmt = $conn->prepare($sql);
+        $result = $stmt->executeQuery();
+
+        return !empty($result->fetchAllAssociative());
+    }
 }

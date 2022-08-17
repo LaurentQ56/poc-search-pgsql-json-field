@@ -13,10 +13,10 @@ class People
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column]
+    #[ORM\Column(type: "json", nullable: false, options: ["jsonb" => true])]
     private array $contact = [];
 
-    #[ORM\Column]
+    #[ORM\Column(type: "json", nullable: false, options: ["jsonb" => true])]
     private array $address = [];
 
     public function getId(): ?int
